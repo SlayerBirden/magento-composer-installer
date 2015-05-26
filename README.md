@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/slayerbirden/magento-composer-installer.png)](https://travis-ci.org/slayerbirden/magento-composer-installer)
+[![Build Status](https://travis-ci.org/SlayerBirden/magento-composer-installer.png)](https://travis-ci.org/SlayerBirden/magento-composer-installer)
 
 # Magento Composer Installer 
 
