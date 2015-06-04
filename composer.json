@@ -2,7 +2,7 @@
     "name":"magento-hackathon/magento-composer-installer",
     "description":"Composer installer for Magento modules and core",
     "keywords":[ "composer-installer", "magento"],
-    "minimum-stability":"dev",
+    "minimum-stability":"stable",
     "type":"composer-plugin",
     "license":"OSL-3.0",
     "homepage":"https://github.com/SlayerBirden/magento-composer-installer",
