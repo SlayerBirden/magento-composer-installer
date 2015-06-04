@@ -10,8 +10,10 @@ namespace MagentoHackathon\Composer\Magento\Deploy\Manager;
 
 class Entry
 {
-
+    /** @var string */
     protected $packageName;
+    /** @var string */
+    protected $packageType;
 
     /**
      * @var \MagentoHackathon\Composer\Magento\Deploystrategy\DeploystrategyAbstract
@@ -32,6 +34,22 @@ class Entry
     public function getPackageName()
     {
         return $this->packageName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPackageType()
+    {
+        return $this->packageType;
+    }
+
+    /**
+     * @param string $packageType
+     */
+    public function setPackageType($packageType)
+    {
+        $this->packageType = $packageType;
     }
 
     /**

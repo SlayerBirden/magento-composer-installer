@@ -25,15 +25,30 @@ class InstalledPackage
     protected $installedFiles;
 
     /**
+     * @var array
+     */
+    protected $currentDirectives;
+
+    /**
+     * @param array $currentDirectives
+     */
+    public function setCurrentDirectives($currentDirectives)
+    {
+        $this->currentDirectives = $currentDirectives;
+    }
+
+    /**
      * @param string $name
      * @param string $version
      * @param array $files
+     * @param array $currentDirectives
      */
-    public function __construct($name, $version, array $files)
+    public function __construct($name, $version, array $files, array $currentDirectives = array())
     {
         $this->name = $name;
         $this->installedFiles = $files;
         $this->version = $version;
+        $this->currentDirectives = $currentDirectives;
     }
 
     /**
@@ -66,5 +81,13 @@ class InstalledPackage
     public function getInstalledFiles()
     {
         return $this->installedFiles;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCurrentDirectives()
+    {
+        return $this->currentDirectives;
     }
 }

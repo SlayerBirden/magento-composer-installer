@@ -3,11 +3,9 @@
 namespace MagentoHackathon\Composer\Magento;
 
 use Composer\Package\PackageInterface;
-use MagentoHackathon\Composer\Magento\Deploy\Manager\Entry;
 use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\Event\PackageDeployEvent;
-use MagentoHackathon\Composer\Magento\Event\PackageUnInstallEvent;
-use MagentoHackathon\Composer\Magento\Factory\InstallStrategyFactory;
+use MagentoHackathon\Composer\Magento\Factory\EntryFactory;
 use MagentoHackathon\Composer\Magento\Repository\InstalledPackageRepositoryInterface;
 use MagentoHackathon\Composer\Magento\UnInstallStrategy\UnInstallStrategyInterface;
 
@@ -37,31 +35,30 @@ class ModuleManager
      * @var UnInstallStrategyInterface
      */
     protected $unInstallStrategy;
-
     /**
-     * @var InstallStrategyFactory
+     * @var EntryFactory
      */
-    protected $installStrategyFactory;
+    private $entryFactory;
 
     /**
      * @param InstalledPackageRepositoryInterface $installedRepository
      * @param EventManager $eventManager
      * @param ProjectConfig $config
      * @param UnInstallStrategyInterface $unInstallStrategy
-     * @param InstallStrategyFactory $installStrategyFactory
+     * @param EntryFactory $entryFactory
      */
     public function __construct(
         InstalledPackageRepositoryInterface $installedRepository,
         EventManager $eventManager,
         ProjectConfig $config,
         UnInstallStrategyInterface $unInstallStrategy,
-        InstallStrategyFactory $installStrategyFactory
+        EntryFactory $entryFactory
     ) {
         $this->installedPackageRepository = $installedRepository;
         $this->eventManager = $eventManager;
         $this->config = $config;
         $this->unInstallStrategy = $unInstallStrategy;
-        $this->installStrategyFactory = $installStrategyFactory;
+        $this->entryFactory = $entryFactory;
     }
 
     /**
@@ -80,22 +77,13 @@ class ModuleManager
         $this->doRemoves($packagesToRemove);
         //$this->doInstalls($packagesToInstall);
 
-
-
         foreach ($packagesToInstall as $install) {
-            $installStrategy = $this->installStrategyFactory->make(
-                $install,
-                $this->getPackageSourceDirectory($install)
-            );
-
-
-            $deployEntry = new Entry();
+            $deployEntry = $this->entryFactory->make($install, $this->getPackageSourceDirectory($install));
             $deployEntry->setPackageName($install->getPrettyName());
-            $deployEntry->setDeployStrategy($installStrategy);
             $this->eventManager->dispatch(
                 new PackageDeployEvent('pre-package-deploy', $deployEntry)
             );
-            $files = $installStrategy->deploy()->getDeployedFiles();
+            $files = $deployEntry->getDeployStrategy()->deploy()->getDeployedFiles();
             $this->eventManager->dispatch(
                 new PackageDeployEvent('post-package-deploy', $deployEntry)
             );

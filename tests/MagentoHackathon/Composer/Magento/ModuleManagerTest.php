@@ -5,8 +5,9 @@ namespace MagentoHackathon\Composer\Magento;
 use Composer\Package\Package;
 use MagentoHackathon\Composer\Magento\Deploystrategy\None;
 use MagentoHackathon\Composer\Magento\Event\EventManager;
+use MagentoHackathon\Composer\Magento\Factory\DeploystrategyFactory;
+use MagentoHackathon\Composer\Magento\Factory\EntryFactory;
 use MagentoHackathon\Composer\Magento\Factory\InstallStrategyFactory;
-use MagentoHackathon\Composer\Magento\Factory\ParserFactory;
 use MagentoHackathon\Composer\Magento\Repository\InstalledPackageFileSystemRepository;
 use org\bovigo\vfs\vfsStream;
 
@@ -20,7 +21,7 @@ class ModuleManagerTest extends \PHPUnit_Framework_TestCase
     protected $moduleManager;
     protected $installedPackageRepository;
     protected $unInstallStrategy;
-    protected $installStrategyFactory;
+    protected $entryFactory;
 
     public function setUp()
     {
@@ -40,13 +41,13 @@ class ModuleManagerTest extends \PHPUnit_Framework_TestCase
             ->method('make')
             ->will($this->returnValue(new None('src', 'dest')));
 
-        $this->installStrategyFactory = new InstallStrategyFactory($config, $parserFactory);
+        $this->entryFactory = new EntryFactory($config, new DeploystrategyFactory($config) ,$parserFactory);
         $this->moduleManager = new ModuleManager(
             $this->installedPackageRepository,
             new EventManager,
             $config,
             $this->unInstallStrategy,
-            $this->installStrategyFactory
+            $this->entryFactory
         );
     }
 

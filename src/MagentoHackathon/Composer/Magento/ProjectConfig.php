@@ -11,7 +11,6 @@ namespace MagentoHackathon\Composer\Magento;
 use Composer\Factory;
 use Composer\Json\JsonFile;
 use Composer\Json\JsonManipulator;
-use SebastianBergmann\Exporter\Exception;
 
 class ProjectConfig
 {
@@ -165,6 +164,9 @@ class ProjectConfig
      */
     public function getDeployStrategy()
     {
+        if ($this->fetchVarFromConfigArray($this->composerConfig, 'type') == 'magento-core') {
+            return 'core';
+        }
         return trim((string)$this->fetchVarFromExtraConfig(self::MAGENTO_DEPLOY_STRATEGY_KEY));
     }
 
@@ -224,6 +226,8 @@ class ProjectConfig
             $sortValue = 100;
             if ($this->getModuleSpecificDeployStrategy($packagename) === 'copy') {
                 $sortValue++;
+            } elseif ($this->getModuleSpecificDeployStrategy($packagename) === 'core') {
+                $sortValue = PHP_INT_MAX;
             }
         }
         return $sortValue;
@@ -362,15 +366,15 @@ class ProjectConfig
         $composerFile = Factory::getComposerFile();
 
         if (!file_exists($composerFile) && !file_put_contents($composerFile, "{\n}\n")) {
-            throw new Exception(sprintf('%s could not be created', $composerFile));
+            throw new \Exception(sprintf('%s could not be created', $composerFile));
         }
 
         if (!is_readable($composerFile)) {
-            throw new Exception(sprintf('%s is not readable', $composerFile));
+            throw new \Exception(sprintf('%s is not readable', $composerFile));
         }
 
         if (!is_writable($composerFile)) {
-            throw new Exception(sprintf('%s is not writable', $composerFile));
+            throw new \Exception(sprintf('%s is not writable', $composerFile));
         }
 
         $json = new JsonFile($composerFile);

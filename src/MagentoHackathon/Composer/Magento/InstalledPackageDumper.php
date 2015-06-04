@@ -27,6 +27,10 @@ class InstalledPackageDumper
      */
     public function restore(array $data)
     {
-        return new InstalledPackage($data['packageName'], $data['version'], $data['installedFiles']);
+        $package = new InstalledPackage($data['packageName'], $data['version'], $data['installedFiles']);
+        if (isset($data['currentDirectives'])) {
+            $package->setCurrentDirectives($data['currentDirectives']);
+        }
+        return $package;
     }
 }
