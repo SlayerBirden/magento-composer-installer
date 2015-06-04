@@ -27,7 +27,7 @@ cache:
   - $HOME/.composer/cache
 
 install:
-  - pecl install SPL_Types
+  #- pecl install SPL_Types
   - curl -sS https://getcomposer.org/installer | php
   - chmod +x ./composer.phar
   - ./composer.phar --version
