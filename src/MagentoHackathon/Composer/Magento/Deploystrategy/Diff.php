@@ -2,37 +2,15 @@
 
 namespace MagentoHackathon\Composer\Magento\Deploystrategy;
 
-use MagentoHackathon\Composer\Magento\Directives\ActionInterface;
-use MagentoHackathon\Composer\Magento\Directives\Bag;
-
-class Core extends Copy
+class Diff extends Copy
 {
-    /** @var Bag|ActionInterface[] */
-    protected $actionBag;
-
-    /**
-     * @return Bag|ActionInterface[]
-     */
-    public function getActionBag()
-    {
-        return $this->actionBag;
-    }
-
-    /**
-     * @param Bag $actionBag
-     */
-    public function setActionBag($actionBag)
-    {
-        $this->actionBag = $actionBag;
-    }
-
     /**
      * {@inheritdoc}
      */
     public function deploy()
     {
         $this->beforeDeploy();
-        foreach ($this->actionBag as $action) {
+        foreach ($this->actionBag->getNormalized() as $action) {
             $action->process($this);
         }
         $this->afterDeploy();

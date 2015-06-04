@@ -11,6 +11,7 @@ namespace MagentoHackathon\Composer\Magento;
 use Composer\Factory;
 use Composer\Json\JsonFile;
 use Composer\Json\JsonManipulator;
+use Composer\Package\PackageInterface;
 
 class ProjectConfig
 {
@@ -164,9 +165,6 @@ class ProjectConfig
      */
     public function getDeployStrategy()
     {
-        if ($this->fetchVarFromConfigArray($this->composerConfig, 'type') == 'magento-core') {
-            return 'core';
-        }
         return trim((string)$this->fetchVarFromExtraConfig(self::MAGENTO_DEPLOY_STRATEGY_KEY));
     }
 
@@ -213,20 +211,21 @@ class ProjectConfig
     }
 
     /**
-     * @param $packagename
+     * @param $package
      *
      * @return integer
      */
-    public function getModuleSpecificSortValue($packagename)
+    public function getModuleSpecificSortValue(PackageInterface $package)
     {
         $sortPriorityArray = $this->fetchVarFromExtraConfig(self::SORT_PRIORITY_KEY, array());
-        if (isset($sortPriorityArray[$packagename])) {
-            $sortValue = $sortPriorityArray[$packagename];
+        if (isset($sortPriorityArray[$package->getName()])) {
+            $sortValue = $sortPriorityArray[$package->getName()];
         } else {
             $sortValue = 100;
-            if ($this->getModuleSpecificDeployStrategy($packagename) === 'copy') {
+            if ($this->getModuleSpecificDeployStrategy($package->getName()) === 'copy') {
                 $sortValue++;
-            } elseif ($this->getModuleSpecificDeployStrategy($packagename) === 'core') {
+            }
+            if ($package->getType() === Plugin::CORE_TYPE) {
                 $sortValue = PHP_INT_MAX;
             }
         }

@@ -6,6 +6,8 @@
 namespace MagentoHackathon\Composer\Magento\Deploystrategy;
 
 use Composer\Util\Filesystem;
+use MagentoHackathon\Composer\Magento\Directives\ActionInterface;
+use MagentoHackathon\Composer\Magento\Directives\Bag;
 
 /**
  * Abstract deploy strategy
@@ -75,6 +77,9 @@ abstract class DeploystrategyAbstract
      * @var Filesystem
      */
     protected $filesystem;
+
+    /** @var Bag|ActionInterface[] */
+    protected $actionBag;
 
     /**
      * Constructor
@@ -515,5 +520,21 @@ abstract class DeploystrategyAbstract
     public function getRemovedFiles()
     {
         return $this->removedFiles;
+    }
+
+    /**
+     * @return Bag|ActionInterface[]
+     */
+    public function getActionBag()
+    {
+        return $this->actionBag;
+    }
+
+    /**
+     * @param Bag $actionBag
+     */
+    public function setActionBag($actionBag)
+    {
+        $this->actionBag = $actionBag;
     }
 }

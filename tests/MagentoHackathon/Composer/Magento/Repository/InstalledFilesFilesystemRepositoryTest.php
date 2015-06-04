@@ -103,6 +103,7 @@ class InstalledFilesFilesystemRepositoryTest extends \PHPUnit_Framework_TestCase
             'packageName' => 'some-package',
             'version' => '1.0.0',
             'installedFiles' => $files,
+            'currentDirectives' => [],
         ));
         $package = new InstalledPackage('some-package', '1.0.0', $files);
         $this->repository->add($package);

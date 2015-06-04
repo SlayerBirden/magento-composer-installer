@@ -4,6 +4,7 @@ namespace MagentoHackathon\Composer\Magento\Factory;
 
 use Composer\Package\PackageInterface;
 use MagentoHackathon\Composer\Magento\Deploystrategy\Core;
+use MagentoHackathon\Composer\Magento\Directives\Bag;
 use MagentoHackathon\Composer\Magento\Factory\Directives\ActionBagFactory;
 use MagentoHackathon\Composer\Magento\Plugin;
 use MagentoHackathon\Composer\Magento\ProjectConfig;
@@ -28,6 +29,7 @@ class DeploystrategyFactory
         'symlink'   => '\MagentoHackathon\Composer\Magento\Deploystrategy\Symlink',
         'link'      => '\MagentoHackathon\Composer\Magento\Deploystrategy\Link',
         'none'      => '\MagentoHackathon\Composer\Magento\Deploystrategy\None',
+        'diff'      => '\MagentoHackathon\Composer\Magento\Deploystrategy\Diff',
     );
 
     /**
@@ -45,14 +47,6 @@ class DeploystrategyFactory
      */
     public function make(PackageInterface $package, $packageSourcePath)
     {
-        if ($package->getType() == Plugin::CORE_TYPE) {
-            $strategy = new Core($packageSourcePath, realpath($this->config->getMagentoRootDir()));
-            $strategy->setIsForced(true);
-            $strategy->setIgnoredMappings(false);
-            $actionFactory = new ActionBagFactory();
-            $strategy->setActionBag($actionFactory->make($package, $packageSourcePath));
-            return $strategy;
-        }
         $strategyName = $this->config->getDeployStrategy();
         if ($this->config->hasDeployStrategyOverwrite()) {
             $moduleSpecificDeployStrategies = $this->config->getDeployStrategyOverwrite();
@@ -72,6 +66,9 @@ class DeploystrategyFactory
         $strategy = new $className($packageSourcePath, realpath($this->config->getMagentoRootDir()));
         $strategy->setIgnoredMappings($this->config->getModuleSpecificDeployIgnores($package->getName()));
         $strategy->setIsForced($this->config->getMagentoForceByPackageName($package->getName()));
+        $actionFactory = new ActionBagFactory();
+        $bag = $actionFactory->make($package, $packageSourcePath);
+        $strategy->setActionBag($bag);
         return $strategy;
     }
 }

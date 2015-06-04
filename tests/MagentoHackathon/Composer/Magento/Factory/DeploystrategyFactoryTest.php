@@ -35,6 +35,7 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
             'magento-root-dir' => vfsStream::url('root/htdocs'),
         ), array());
         $factory = new DeploystrategyFactory($config);
+        vfsStream::newFile('directives.csv')->at($this->root);
         $instance = $factory->make($package, sprintf('%s/some/package', vfsStream::url('root/vendor')));
         $this->assertInstanceOf($expectedClass, $instance);
     }
@@ -49,7 +50,7 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
             array('symlink', '\MagentoHackathon\Composer\Magento\Deploystrategy\Symlink', 'magento-module'),
             array('link',    '\MagentoHackathon\Composer\Magento\Deploystrategy\Link', 'magento-module'),
             array('none',    '\MagentoHackathon\Composer\Magento\Deploystrategy\None', 'magento-module'),
-            array('none',    '\MagentoHackathon\Composer\Magento\Deploystrategy\Core', 'magento-core'),
+            array('diff',    '\MagentoHackathon\Composer\Magento\Deploystrategy\Diff', 'magento-core'),
         );
     }
 

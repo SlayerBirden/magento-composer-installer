@@ -3,8 +3,10 @@
 namespace MagentoHackathon\Composer\Magento;
 
 use Composer\Package\PackageInterface;
+use MagentoHackathon\Composer\Magento\Directives\ArrayDumper;
 use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\Event\PackageDeployEvent;
+use MagentoHackathon\Composer\Magento\Factory\Directives\ActionBagFactory;
 use MagentoHackathon\Composer\Magento\Factory\EntryFactory;
 use MagentoHackathon\Composer\Magento\Repository\InstalledPackageRepositoryInterface;
 use MagentoHackathon\Composer\Magento\UnInstallStrategy\UnInstallStrategyInterface;
@@ -83,14 +85,24 @@ class ModuleManager
             $this->eventManager->dispatch(
                 new PackageDeployEvent('pre-package-deploy', $deployEntry)
             );
+            $actualBag = $deployEntry->getDeployStrategy()->getActionBag();
+            $factory = new ActionBagFactory();
+            if (isset($currentComposerInstalledPackages[$install->getName()]) && $actualBag) {
+                $deployEntry->getDeployStrategy()
+                    ->setActionBag($actualBag->diff($factory->parseMappings($currentComposerInstalledPackages[$install->getName()])));
+            }
+
             $files = $deployEntry->getDeployStrategy()->deploy()->getDeployedFiles();
+
             $this->eventManager->dispatch(
                 new PackageDeployEvent('post-package-deploy', $deployEntry)
             );
+            $arrayDumper = new ArrayDumper();
             $this->installedPackageRepository->add(new InstalledPackage(
                 $install->getName(),
                 $install->getVersion(),
-                $files
+                $files,
+                $arrayDumper->dump($actualBag)
             ));
         }
 
@@ -111,7 +123,10 @@ class ModuleManager
         };
         foreach ($packagesToRemove as $remove) {
             //$this->eventManager->dispatch(new PackageUnInstallEvent('pre-package-uninstall', $remove));
-            $this->unInstallStrategy->unInstall(array_map($addBasePath, $remove->getInstalledFiles()));
+            // do not remove code if we have diff
+            if ($this->config->getModuleSpecificDeployStrategy($remove->getName()) != 'diff') {
+                $this->unInstallStrategy->unInstall(array_map($addBasePath, $remove->getInstalledFiles()));
+            }
             //$this->eventManager->dispatch(new PackageUnInstallEvent('post-package-uninstall', $remove));
             $this->installedPackageRepository->remove($remove);
         }
@@ -161,8 +176,8 @@ class ModuleManager
         
         $config = $this->config;
         usort($packages, function(PackageInterface $aObject, PackageInterface $bObject) use ($config) {
-            $a = $config->getModuleSpecificSortValue($aObject->getName());
-            $b = $config->getModuleSpecificSortValue($bObject->getName());
+            $a = $config->getModuleSpecificSortValue($aObject);
+            $b = $config->getModuleSpecificSortValue($bObject);
             if ($a == $b) {
                 return strcmp($aObject->getName(), $bObject->getName());
                 /**

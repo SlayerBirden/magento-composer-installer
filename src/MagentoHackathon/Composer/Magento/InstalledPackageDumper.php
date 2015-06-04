@@ -18,6 +18,7 @@ class InstalledPackageDumper
             'packageName'       => $installedPackage->getName(),
             'version'           => $installedPackage->getVersion(),
             'installedFiles'    => $installedPackage->getInstalledFiles(),
+            'currentDirectives'    => $installedPackage->getCurrentDirectives(),
         );
     }
 

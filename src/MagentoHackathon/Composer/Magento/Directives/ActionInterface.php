@@ -12,4 +12,9 @@ interface ActionInterface
      * @return bool
      */
     public function process(DeploystrategyAbstract $strat);
+
+    /**
+     * @return string
+     */
+    public function getType();
 }
