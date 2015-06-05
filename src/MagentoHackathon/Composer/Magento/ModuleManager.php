@@ -64,14 +64,32 @@ class ModuleManager
     }
 
     /**
+     * @param $needle
+     * @param array|InstalledPackage[] $haystack
+     * @return bool|\MagentoHackathon\Composer\Magento\InstalledPackage
+     */
+    protected function _getPackageByName($needle, array $haystack)
+    {
+        foreach ($haystack as $package) {
+            if ($package instanceof InstalledPackage) {
+                if ($package->getName() == $needle) {
+                    return $package;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * @param array $currentComposerInstalledPackages
      * @return array
      */
     public function updateInstalledPackages(array $currentComposerInstalledPackages)
     {
+        $magentoInstalledPackages = $this->installedPackageRepository->findAll();
         $packagesToRemove = $this->getRemoves(
             $currentComposerInstalledPackages,
-            $this->installedPackageRepository->findAll()
+            $magentoInstalledPackages
         );
 
         $packagesToInstall  = $this->getInstalls($currentComposerInstalledPackages);
@@ -87,9 +105,9 @@ class ModuleManager
             );
             $actualBag = $deployEntry->getDeployStrategy()->getActionBag();
             $factory = new ActionBagFactory();
-            if (isset($currentComposerInstalledPackages[$install->getName()]) && $actualBag) {
+            if (($installed = $this->_getPackageByName($install->getName(), $magentoInstalledPackages)) && $actualBag) {
                 $deployEntry->getDeployStrategy()
-                    ->setActionBag($actualBag->diff($factory->parseMappings($currentComposerInstalledPackages[$install->getName()])));
+                    ->setActionBag($actualBag->diff($factory->parseMappings($installed->getCurrentDirectives())));
             }
 
             $files = $deployEntry->getDeployStrategy()->deploy()->getDeployedFiles();
