@@ -42,7 +42,11 @@ class CsvMapParser extends MapParser
     {
         $map = array();
         while (!$this->file->eof()) {
-            $map[] = $this->file->fgetcsv();
+            $row = $this->file->fgetcsv();
+            $row = array_filter(array_map('trim', $row));
+            if ($row) {
+                $map[] = $row;
+            }
         }
 
         return $map;

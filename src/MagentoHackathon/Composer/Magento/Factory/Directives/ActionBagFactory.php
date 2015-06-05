@@ -37,7 +37,7 @@ class ActionBagFactory
         $i = 0;
         foreach ($mapping as $row) {
             if (!isset($row[0]) || !isset($row[1]) || !isset($row[2])) {
-                throw new \ErrorException(sprintf("Invalid row #%d: %s", $i, json_encode($row)));
+                throw new \ErrorException(sprintf("Invalid row in directives.csv #%d: %s", $i + 1, json_encode($row)));
             }
             list($type, $source, $destination) = $row;
             switch ($type) {
