@@ -95,9 +95,10 @@ class InstalledPackageFileSystemRepository implements InstalledPackageRepository
      *
      * @param string $packageName
      * @param string $version
+     * @param string $ref
      * @return bool
      */
-    public function has($packageName, $version = null)
+    public function has($packageName, $version = null, $ref = null)
     {
         $this->load();
         try {
@@ -107,7 +108,12 @@ class InstalledPackageFileSystemRepository implements InstalledPackageRepository
                 return true;
             }
 
-            return $package->getVersion() === $version;
+            $result = $package->getVersion() === $version;
+
+            if (is_null($ref)) {
+                return $result;
+            }
+            return $package->getRef() === $ref;
         } catch (\Exception $e) {
             return false;
         }

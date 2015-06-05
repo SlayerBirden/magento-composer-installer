@@ -204,7 +204,12 @@ class ModuleManager
     {
         $repo = $this->installedPackageRepository;
         $packages = array_filter($currentComposerInstalledPackages, function(PackageInterface $package) use ($repo) {
-            return !$repo->has($package->getName(), $package->getVersion());
+            return !$repo->has($package->getName(),
+                $package->getVersion(),
+                ($package->getInstallationSource() == 'source' ?
+                $package->getSourceReference() :
+                $package->getDistReference())
+            );
         });
         
         $config = $this->config;
