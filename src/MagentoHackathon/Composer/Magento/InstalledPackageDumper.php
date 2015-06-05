@@ -33,6 +33,9 @@ class InstalledPackageDumper
         if (isset($data['currentDirectives'])) {
             $package->setCurrentDirectives($data['currentDirectives']);
         }
+        if (isset($data['ref'])) {
+            $package->setRef($data['ref']);
+        }
         return $package;
     }
 }

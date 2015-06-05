@@ -113,4 +113,12 @@ class InstalledPackage
     {
         return $this->ref;
     }
+
+    /**
+     * @param string $ref
+     */
+    public function setRef($ref)
+    {
+        $this->ref = $ref;
+    }
 }
