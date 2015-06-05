@@ -8,6 +8,7 @@ namespace MagentoHackathon\Composer\Magento\Deploystrategy;
 use Composer\Util\Filesystem;
 use MagentoHackathon\Composer\Magento\Directives\ActionInterface;
 use MagentoHackathon\Composer\Magento\Directives\Bag;
+use MagentoHackathon\Composer\Magento\Event\EventManager;
 
 /**
  * Abstract deploy strategy
@@ -80,6 +81,11 @@ abstract class DeploystrategyAbstract
 
     /** @var Bag|ActionInterface[] */
     protected $actionBag;
+
+    /**
+     * @var EventManager
+     */
+    protected $eventManager;
 
     /**
      * Constructor
@@ -312,6 +318,22 @@ abstract class DeploystrategyAbstract
     protected function removeTrailingSlash($path)
     {
         return rtrim($path, '\\/');
+    }
+
+    /**
+     * @return EventManager
+     */
+    public function getEventManager()
+    {
+        return $this->eventManager;
+    }
+
+    /**
+     * @param EventManager $eventManager
+     */
+    public function setEventManager($eventManager)
+    {
+        $this->eventManager = $eventManager;
     }
 
     /**

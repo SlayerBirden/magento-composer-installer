@@ -64,4 +64,12 @@ abstract class AbstractAction implements ActionInterface
     {
         return static::TYPE;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return sprintf("%s: from %s to %s.", $this->getType(), $this->getSource(), $this->getDestination());
+    }
 }

@@ -6,6 +6,7 @@ use Composer\Config;
 use Composer\Installer;
 use Composer\Script\Event;
 use MagentoHackathon\Composer\Helper;
+use MagentoHackathon\Composer\Magento\Event\DebugEvent;
 use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\Event\PackageDeployEvent;
 use MagentoHackathon\Composer\Magento\Factory\DeploystrategyFactory;
@@ -79,10 +80,13 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $io = $this->io;
         if ($this->io->isDebug()) {
-            $eventManager->listen('pre-package-deploy', function(PackageDeployEvent $event) use ($io) {
+            $eventManager->listen('pre-package-deploy', function (PackageDeployEvent $event) use ($io) {
                 $io->write('Start magento deploy for ' . $event->getDeployEntry()->getPackageName());
             });
         }
+        $eventManager->listen('debug', function (DebugEvent $event) {
+            $this->writeDebug($event->getMessage());
+        });
     }
 
     /**

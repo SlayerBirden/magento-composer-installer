@@ -2,6 +2,8 @@
 
 namespace MagentoHackathon\Composer\Magento\Deploystrategy;
 
+use MagentoHackathon\Composer\Magento\Event\DebugEvent;
+
 class Diff extends DeploystrategyAbstract
 {
     /**
@@ -12,6 +14,7 @@ class Diff extends DeploystrategyAbstract
         $this->beforeDeploy();
         foreach ($this->actionBag->getNormalized() as $action) {
             $action->process($this);
+            $this->getEventManager()->dispatch(new DebugEvent('debug', $action));
         }
         $this->afterDeploy();
         return $this;
