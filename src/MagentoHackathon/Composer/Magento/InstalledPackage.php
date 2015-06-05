@@ -30,6 +30,11 @@ class InstalledPackage
     protected $currentDirectives;
 
     /**
+     * @var string
+     */
+    protected $ref;
+
+    /**
      * @param array $currentDirectives
      */
     public function setCurrentDirectives($currentDirectives)
@@ -41,14 +46,16 @@ class InstalledPackage
      * @param string $name
      * @param string $version
      * @param array $files
+     * @param string $ref
      * @param array $currentDirectives
      */
-    public function __construct($name, $version, array $files, array $currentDirectives = array())
+    public function __construct($name, $version, array $files, $ref = '', array $currentDirectives = array())
     {
         $this->name = $name;
         $this->installedFiles = $files;
         $this->version = $version;
         $this->currentDirectives = $currentDirectives;
+        $this->ref = $ref;
     }
 
     /**
@@ -76,6 +83,14 @@ class InstalledPackage
     }
 
     /**
+     * @return string
+     */
+    public function getUniqueRefName()
+    {
+        return sprintf('%s-%s-%s', $this->getName(), $this->getVersion(), $this->getRef());
+    }
+
+    /**
      * @return array
      */
     public function getInstalledFiles()
@@ -89,5 +104,13 @@ class InstalledPackage
     public function getCurrentDirectives()
     {
         return $this->currentDirectives;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRef()
+    {
+        return $this->ref;
     }
 }

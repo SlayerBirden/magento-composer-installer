@@ -68,7 +68,7 @@ class ModuleManager
      * @param array|InstalledPackage[] $haystack
      * @return bool|\MagentoHackathon\Composer\Magento\InstalledPackage
      */
-    protected function _getPackageByName($needle, array $haystack)
+    protected function getPackageByName($needle, array $haystack)
     {
         foreach ($haystack as $package) {
             if ($package instanceof InstalledPackage) {
@@ -105,7 +105,7 @@ class ModuleManager
             );
             $actualBag = $deployEntry->getDeployStrategy()->getActionBag();
             $factory = new ActionBagFactory();
-            if (($installed = $this->_getPackageByName($install->getName(), $magentoInstalledPackages)) && $actualBag) {
+            if (($installed = $this->getPackageByName($install->getName(), $magentoInstalledPackages)) && $actualBag) {
                 $deployEntry->getDeployStrategy()
                     ->setActionBag($actualBag->diff($factory->parseMappings($installed->getCurrentDirectives())));
             }
@@ -120,6 +120,7 @@ class ModuleManager
                 $install->getName(),
                 $install->getVersion(),
                 $files,
+                ($install->getInstallationSource() == 'source' ? $install->getSourceReference() : $install->getDistReference()),
                 $arrayDumper->dump($actualBag)
             ));
         }
@@ -174,10 +175,24 @@ class ModuleManager
                 if (!isset($currentComposerInstalledPackages[$package->getName()])) {
                     return true;
                 }
-
+                /** @var PackageInterface $composerPackage */
                 $composerPackage = $currentComposerInstalledPackages[$package->getName()];
-                return $package->getUniqueName() !== $composerPackage->getUniqueName();
+                return $package->getUniqueRefName() !== $this->getPackageUniqueRefName($composerPackage);
             }
+        );
+    }
+
+    /**
+     * @param PackageInterface $package
+     * @return string
+     */
+    protected function getPackageUniqueRefName(PackageInterface $package)
+    {
+        return sprintf('%s-%s',
+            $package->getUniqueName(),
+            ($package->getInstallationSource() == 'source' ?
+                $package->getSourceReference() :
+                $package->getDistReference())
         );
     }
 

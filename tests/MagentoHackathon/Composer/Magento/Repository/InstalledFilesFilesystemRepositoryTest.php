@@ -5,7 +5,6 @@ namespace MagentoHackathon\Composer\Magento\Repository;
 use MagentoHackathon\Composer\Magento\InstalledPackage;
 use MagentoHackathon\Composer\Magento\InstalledPackageDumper;
 use org\bovigo\vfs\vfsStream;
-use Symfony\Component\Yaml\Dumper;
 
 /**
  * Class InstalledFilesFilesystemRepositoryTest
@@ -16,7 +15,7 @@ class InstalledFilesFilesystemRepositoryTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
-     * @var InstalledFilesFilesystemRepository
+     * @var InstalledPackageFileSystemRepository
      */
     protected $repository;
 
@@ -103,6 +102,7 @@ class InstalledFilesFilesystemRepositoryTest extends \PHPUnit_Framework_TestCase
             'packageName' => 'some-package',
             'version' => '1.0.0',
             'installedFiles' => $files,
+            'ref' => '',
             'currentDirectives' => [],
         ));
         $package = new InstalledPackage('some-package', '1.0.0', $files);
