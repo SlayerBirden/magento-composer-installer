@@ -103,11 +103,15 @@ class ModuleManager
             $this->eventManager->dispatch(
                 new PackageDeployEvent('pre-package-deploy', $deployEntry)
             );
-            $actualBag = $deployEntry->getDeployStrategy()->getActionBag();
+            $initialBag = clone $deployEntry->getDeployStrategy()->getActionBag();
             $factory = new ActionBagFactory();
-            if (($installed = $this->getPackageByName($install->getName(), $magentoInstalledPackages)) && $actualBag) {
+            if (($installed = $this->getPackageByName($install->getName(), $magentoInstalledPackages)) && $initialBag) {
                 $deployEntry->getDeployStrategy()
-                    ->setActionBag($actualBag->diff($factory->parseMappings($installed->getCurrentDirectives())));
+                    ->setActionBag(
+                        $deployEntry->getDeployStrategy()
+                        ->getActionBag()
+                        ->diff($factory->parseMappings($installed->getCurrentDirectives()))
+                    );
             }
 
             $files = $deployEntry->getDeployStrategy()->deploy()->getDeployedFiles();
@@ -121,7 +125,7 @@ class ModuleManager
                 $install->getVersion(),
                 $files,
                 ($install->getInstallationSource() == 'source' ? $install->getSourceReference() : $install->getDistReference()),
-                $arrayDumper->dump($actualBag)
+                $arrayDumper->dump($initialBag)
             ));
         }
 
