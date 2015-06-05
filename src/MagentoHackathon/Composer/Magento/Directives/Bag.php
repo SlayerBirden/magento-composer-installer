@@ -14,6 +14,30 @@ class Bag implements \IteratorAggregate, \Countable
     protected $normalizer;
 
     /**
+     * @return NormalizerInterface
+     */
+    public function getNormalizer()
+    {
+        return $this->normalizer;
+    }
+
+    /**
+     * @param NormalizerInterface $normalizer
+     */
+    public function setNormalizer($normalizer)
+    {
+        $this->normalizer = $normalizer;
+    }
+
+    /**
+     * @param NormalizerInterface $normalizer
+     */
+    public function __construct(NormalizerInterface $normalizer = null)
+    {
+        $this->normalizer = $normalizer;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getIterator()
