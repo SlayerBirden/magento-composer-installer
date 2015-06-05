@@ -5,6 +5,7 @@ namespace MagentoHackathon\Composer\Magento\Factory;
 use Composer\Package\PackageInterface;
 use MagentoHackathon\Composer\Magento\Deploystrategy\Core;
 use MagentoHackathon\Composer\Magento\Directives\Bag;
+use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\Factory\Directives\ActionBagFactory;
 use MagentoHackathon\Composer\Magento\Plugin;
 use MagentoHackathon\Composer\Magento\ProjectConfig;
@@ -31,13 +32,19 @@ class DeploystrategyFactory
         'none'      => '\MagentoHackathon\Composer\Magento\Deploystrategy\None',
         'diff'      => '\MagentoHackathon\Composer\Magento\Deploystrategy\Diff',
     );
+    /**
+     * @var EventManager
+     */
+    private $eventManager;
 
     /**
      * @param ProjectConfig $config
+     * @param EventManager $eventManager
      */
-    public function __construct(ProjectConfig $config)
+    public function __construct(ProjectConfig $config, EventManager $eventManager)
     {
         $this->config = $config;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -69,6 +76,7 @@ class DeploystrategyFactory
         $actionFactory = new ActionBagFactory();
         $bag = $actionFactory->make($package, $packageSourcePath);
         $strategy->setActionBag($bag);
+        $strategy->setEventManager($this->eventManager);
         return $strategy;
     }
 }

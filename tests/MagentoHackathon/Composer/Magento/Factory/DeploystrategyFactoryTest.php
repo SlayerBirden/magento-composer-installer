@@ -3,6 +3,7 @@
 namespace MagentoHackathon\Composer\Magento\Factory;
 
 use Composer\Package\Package;
+use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\ProjectConfig;
 use org\bovigo\vfs\vfsStream;
 
@@ -34,7 +35,7 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
             'magento-deploystrategy' => $strategy,
             'magento-root-dir' => vfsStream::url('root/htdocs'),
         ), array());
-        $factory = new DeploystrategyFactory($config);
+        $factory = new DeploystrategyFactory($config, new EventManager());
         vfsStream::newFile('directives.csv')->at($this->root);
         $instance = $factory->make($package, sprintf('%s/some/package', vfsStream::url('root/vendor')));
         $this->assertInstanceOf($expectedClass, $instance);
@@ -61,7 +62,7 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
             'magento-deploystrategy' => 'lolnotarealstrategy',
             'magento-root-dir' => vfsStream::url('root/htdocs'),
         ), array());
-        $factory = new DeploystrategyFactory($config);
+        $factory = new DeploystrategyFactory($config, new EventManager());
 
         $instance = $factory->make($package, sprintf('%s/some/package', vfsStream::url('root/vendor')));
         $this->assertInstanceOf('\MagentoHackathon\Composer\Magento\Deploystrategy\Symlink', $instance);
@@ -76,7 +77,7 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
             'magento-root-dir' => vfsStream::url('root/htdocs'),
         ), array());
 
-        $factory = new DeploystrategyFactory($config);
+        $factory = new DeploystrategyFactory($config, new EventManager());
 
         $instance = $factory->make($package, sprintf('%s/some/package', vfsStream::url('root/vendor')));
         $this->assertInstanceOf('\MagentoHackathon\Composer\Magento\Deploystrategy\None', $instance);

@@ -170,7 +170,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $this->entryFactory = new EntryFactory(
             $this->config,
-            new DeploystrategyFactory($this->config),
+            new DeploystrategyFactory($this->config, $eventManager),
             new PathTranslationParserFactory(new ParserFactory($this->config), $this->config)
         );
 

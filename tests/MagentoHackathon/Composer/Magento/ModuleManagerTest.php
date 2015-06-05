@@ -53,7 +53,7 @@ class ModuleManagerTest extends \PHPUnit_Framework_TestCase
             ->method('make')
             ->will($this->returnValue(new None('src', 'dest')));
 
-        $this->entryFactory = new EntryFactory($config, new DeploystrategyFactory($config), $parserFactory);
+        $this->entryFactory = new EntryFactory($config, new DeploystrategyFactory($config, new EventManager()), $parserFactory);
         return new ModuleManager(
             $this->installedPackageRepository,
             new EventManager,
