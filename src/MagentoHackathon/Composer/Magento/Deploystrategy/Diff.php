@@ -2,6 +2,7 @@
 
 namespace MagentoHackathon\Composer\Magento\Deploystrategy;
 
+use MagentoHackathon\Composer\Magento\Directives\ActionInterface;
 use MagentoHackathon\Composer\Magento\Event\DebugEvent;
 
 class Diff extends DeploystrategyAbstract
@@ -49,5 +50,18 @@ class Diff extends DeploystrategyAbstract
             throw new \ErrorException(sprintf("Target %s already exists. Can't use force for diff strategy.", $dest));
         }
         return copy($sourcePath, $destPath);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDeployedFiles()
+    {
+        $filtered = array_filter($this->actionBag->getNormalized(), function (ActionInterface $action) {
+            return $action->getType() === 'add';
+        });
+        return array_map(function (ActionInterface $action) {
+            return $this->getDestDir() . '/' . $this->removeTrailingSlash($action->getDestination());
+        }, $filtered);
     }
 }

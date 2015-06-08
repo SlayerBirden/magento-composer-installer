@@ -17,4 +17,14 @@ interface ActionInterface
      * @return string
      */
     public function getType();
+
+    /**
+     * @return string
+     */
+    public function getDestination();
+
+    /**
+     * @return string
+     */
+    public function getSource();
 }

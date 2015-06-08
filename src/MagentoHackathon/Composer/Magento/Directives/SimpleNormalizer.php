@@ -28,14 +28,12 @@ class SimpleNormalizer implements NormalizerInterface
                 /** @var AbstractAction $previous */
                 $previous = $targets[$action->getDestination()];
                 $new = $action;
-                if (in_array($previous->getType(), ['add', 'create']) &&
-                    in_array($new->getType(), ['delete', 'remove'])) {
+                if ($previous->getType() == 'add' && $new->getType() == 'remove') {
                     // something got added and then removed
                     // unset prev entry
                     // not add new one
                     unset($targets[$action->getDestination()]);
-                } elseif ($previous->getType() == 'update' &&
-                    in_array($new->getType(), ['delete', 'remove'])) {
+                } elseif ($previous->getType() == 'update' && $new->getType() == 'remove') {
                     // something got updated and then removed
                     // we don't need to perform update - nor can we
                     unset($targets[$action->getDestination()]);
