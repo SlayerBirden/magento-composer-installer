@@ -61,7 +61,7 @@ class Diff extends DeploystrategyAbstract
             return $action->getType() === 'add';
         });
         return array_map(function (ActionInterface $action) {
-            return $this->getDestDir() . '/' . $this->removeTrailingSlash($action->getDestination());
+            return preg_replace('@^\./@', '', $action->getDestination());
         }, $filtered);
     }
 }
