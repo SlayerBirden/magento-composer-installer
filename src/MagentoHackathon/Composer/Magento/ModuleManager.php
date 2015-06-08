@@ -105,7 +105,6 @@ class ModuleManager
             );
             $initialBag = clone $deployEntry->getDeployStrategy()->getActionBag();
             $factory = new ActionBagFactory();
-            $swapBag = false;
             if (($installed = $this->getPackageByName($install->getName(), $magentoInstalledPackages)) && $initialBag) {
                 $deployEntry->getDeployStrategy()
                     ->setActionBag(
@@ -113,15 +112,9 @@ class ModuleManager
                         ->getActionBag()
                         ->diff($factory->parseMappings($installed->getCurrentDirectives()))
                     );
-                $swapBag = true;
             }
 
             $files = $deployEntry->getDeployStrategy()->deploy()->getDeployedFiles();
-
-            if ($swapBag) {
-                // set full bag for further hooks
-                $deployEntry->getDeployStrategy()->setActionBag($initialBag);
-            }
 
             $this->eventManager->dispatch(
                 new PackageDeployEvent('post-package-deploy', $deployEntry)
