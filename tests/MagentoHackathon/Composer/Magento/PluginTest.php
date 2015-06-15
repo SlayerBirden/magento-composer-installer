@@ -76,7 +76,7 @@ class PluginTest extends \PHPUnit_Framework_TestCase
         $this->composer->setPackage($rootPackage);
 
         $eventManager
-            ->expects($this->once())
+            ->expects($this->at(0))
             ->method('listen')
             ->with('post-package-deploy', $this->isInstanceOf('MagentoHackathon\Composer\Magento\GitIgnoreListener'));
 
@@ -100,7 +100,7 @@ class PluginTest extends \PHPUnit_Framework_TestCase
         $this->composer->setPackage($this->createRootPackage());
 
         $eventManager
-            ->expects($this->once())
+            ->expects($this->at(0))
             ->method('listen')
             ->with('pre-package-deploy', $this->isInstanceOf('Closure'));
 

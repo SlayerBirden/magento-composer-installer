@@ -54,6 +54,7 @@ class EntryFactory
     {
         $entry = new Entry();
         $entry->setPackageName($package->getName());
+        $entry->setPackageType($package->getType());
 
         $strategy       = $this->deploystrategyFactory->make($package, $packageSourceDirectory);
         $mappingParser  = $this->parserFactory->make($package, $packageSourceDirectory);

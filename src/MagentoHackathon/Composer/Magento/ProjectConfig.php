@@ -11,7 +11,7 @@ namespace MagentoHackathon\Composer\Magento;
 use Composer\Factory;
 use Composer\Json\JsonFile;
 use Composer\Json\JsonManipulator;
-use SebastianBergmann\Exporter\Exception;
+use Composer\Package\PackageInterface;
 
 class ProjectConfig
 {
@@ -211,19 +211,22 @@ class ProjectConfig
     }
 
     /**
-     * @param $packagename
+     * @param $package
      *
      * @return integer
      */
-    public function getModuleSpecificSortValue($packagename)
+    public function getModuleSpecificSortValue(PackageInterface $package)
     {
         $sortPriorityArray = $this->fetchVarFromExtraConfig(self::SORT_PRIORITY_KEY, array());
-        if (isset($sortPriorityArray[$packagename])) {
-            $sortValue = $sortPriorityArray[$packagename];
+        if (isset($sortPriorityArray[$package->getName()])) {
+            $sortValue = $sortPriorityArray[$package->getName()];
         } else {
             $sortValue = 100;
-            if ($this->getModuleSpecificDeployStrategy($packagename) === 'copy') {
+            if ($this->getModuleSpecificDeployStrategy($package->getName()) === 'copy') {
                 $sortValue++;
+            }
+            if ($package->getType() === Plugin::CORE_TYPE) {
+                $sortValue = PHP_INT_MAX;
             }
         }
         return $sortValue;
@@ -362,15 +365,15 @@ class ProjectConfig
         $composerFile = Factory::getComposerFile();
 
         if (!file_exists($composerFile) && !file_put_contents($composerFile, "{\n}\n")) {
-            throw new Exception(sprintf('%s could not be created', $composerFile));
+            throw new \Exception(sprintf('%s could not be created', $composerFile));
         }
 
         if (!is_readable($composerFile)) {
-            throw new Exception(sprintf('%s is not readable', $composerFile));
+            throw new \Exception(sprintf('%s is not readable', $composerFile));
         }
 
         if (!is_writable($composerFile)) {
-            throw new Exception(sprintf('%s is not writable', $composerFile));
+            throw new \Exception(sprintf('%s is not writable', $composerFile));
         }
 
         $json = new JsonFile($composerFile);

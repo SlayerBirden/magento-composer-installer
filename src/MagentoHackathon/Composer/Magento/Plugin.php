@@ -1,10 +1,4 @@
 <?php
-/**
- *
- *
- *
- *
- */
 
 namespace MagentoHackathon\Composer\Magento;
 
@@ -12,16 +6,15 @@ use Composer\Config;
 use Composer\Installer;
 use Composer\Script\Event;
 use MagentoHackathon\Composer\Helper;
+use MagentoHackathon\Composer\Magento\Event\DebugEvent;
 use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\Event\PackageDeployEvent;
 use MagentoHackathon\Composer\Magento\Factory\DeploystrategyFactory;
 use MagentoHackathon\Composer\Magento\Factory\EntryFactory;
 use MagentoHackathon\Composer\Magento\Factory\ParserFactory;
 use MagentoHackathon\Composer\Magento\Factory\PathTranslationParserFactory;
-use MagentoHackathon\Composer\Magento\Patcher\Bootstrap;
 use MagentoHackathon\Composer\Magento\Repository\InstalledPackageFileSystemRepository;
 use MagentoHackathon\Composer\Magento\UnInstallStrategy\UnInstallStrategy;
-use MagentoHackathon\Composer\Magento\Factory\InstallStrategyFactory;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Composer\Composer;
@@ -39,6 +32,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      * The type of packages this plugin supports
      */
     const PACKAGE_TYPE = 'magento-module';
+    const CORE_TYPE = 'magento-core';
 
     const VENDOR_DIR_KEY = 'vendor-dir';
 
@@ -59,11 +53,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     protected $config;
 
     /**
-     * @var DeployManager
-     */
-    protected $deployManager;
-
-    /**
      * @var Composer
      */
     protected $composer;
@@ -79,19 +68,8 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     protected $entryFactory;
 
     /**
-     * init the DeployManager
-     *
-     * @param Composer    $composer
-     * @param IOInterface $io
+     * @param EventManager $eventManager
      */
-    protected function initDeployManager(Composer $composer, IOInterface $io, EventManager $eventManager)
-    {
-        $this->deployManager = new DeployManager($eventManager);
-        $this->deployManager->setSortPriority($this->getSortPriority($composer));
-
-        $this->applyEvents($eventManager);
-    }
-
     protected function applyEvents(EventManager $eventManager)
     {
 
@@ -102,26 +80,13 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $io = $this->io;
         if ($this->io->isDebug()) {
-            $eventManager->listen('pre-package-deploy', function(PackageDeployEvent $event) use ($io) {
+            $eventManager->listen('pre-package-deploy', function (PackageDeployEvent $event) use ($io) {
                 $io->write('Start magento deploy for ' . $event->getDeployEntry()->getPackageName());
             });
         }
-    }
-
-    /**
-     * get Sort Priority from extra Config
-     *
-     * @param \Composer\Composer $composer
-     *
-     * @return array
-     */
-    private function getSortPriority(Composer $composer)
-    {
-        $extra = $composer->getPackage()->getExtra();
-
-        return isset($extra[ProjectConfig::SORT_PRIORITY_KEY])
-            ? $extra[ProjectConfig::SORT_PRIORITY_KEY]
-            : array();
+        $eventManager->listen('debug', function (DebugEvent $event) {
+            $this->writeDebug($event->getMessage());
+        });
     }
 
     /**
@@ -140,22 +105,9 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $this->veryfiyComposerRepositories();
 
-        $this->entryFactory = new EntryFactory(
-            $this->config,
-            new DeploystrategyFactory($this->config),
-            new PathTranslationParserFactory(new ParserFactory($this->config), $this->config)
-        );
-
-        $this->initDeployManager($composer, $io, $this->getEventManager());
+        $this->applyEvents($this->getEventManager());
 
         $this->writeDebug('activate magento plugin');
-
-        /*
-        $moduleInstaller = new ModuleInstaller($io, $composer, $this->entryFactory);
-        $moduleInstaller->setDeployManager($this->deployManager);
-
-        $composer->getInstallationManager()->addInstaller($moduleInstaller);
-        /**/
     }
 
     /**
@@ -196,11 +148,11 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public function onNewCodeEvent(Event $event)
     {
 
-        $packageTypeToMatch = static::PACKAGE_TYPE;
+        $packageTypeToMatch = [static::PACKAGE_TYPE, static::CORE_TYPE];
         $magentoModules = array_filter(
             $this->composer->getRepositoryManager()->getLocalRepository()->getPackages(),
             function (PackageInterface $package) use ($packageTypeToMatch) {
-                return $package->getType() === $packageTypeToMatch;
+                return in_array($package->getType(), $packageTypeToMatch);
             }
         );
 
@@ -215,6 +167,13 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $eventManager = new EventManager;
         $this->applyEvents($eventManager);
+
+        $this->entryFactory = new EntryFactory(
+            $this->config,
+            new DeploystrategyFactory($this->config, $eventManager),
+            new PathTranslationParserFactory(new ParserFactory($this->config), $this->config)
+        );
+
         $moduleManager = new ModuleManager(
             new InstalledPackageFileSystemRepository(
                 $vendorDir.'/installed.json',
@@ -223,7 +182,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             $eventManager,
             $this->config,
             new UnInstallStrategy($this->filesystem),
-            new InstallStrategyFactory($this->config, new ParserFactory($this->config))
+            $this->entryFactory
         );
 
         if (in_array('--redeploy', $event->getArguments())) {
@@ -234,9 +193,11 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         $moduleManager->updateInstalledPackages($magentoModules);
         $this->deployLibraries();
 
-        $patcher = Bootstrap::fromConfig($this->config);
-        $patcher->setIo($this->io);
-        $patcher->patch();
+        // we do not change core even in such way
+        // that can be done in entrance point (index.php)
+//        $patcher = Bootstrap::fromConfig($this->config);
+//        $patcher->setIo($this->io);
+//        $patcher->patch();
     }
 
     /**
@@ -381,7 +342,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         $this->filesystem->ensureDirectoryExists($target);
 
         foreach ($ri as $file) {
-            $targetPath = $target . DIRECTORY_SEPARATOR . $ri->getSubPathName();
+            $targetPath = $target . DIRECTORY_SEPARATOR . $file->getSubPathName();
             if ($file->isDir()) {
                 $this->filesystem->ensureDirectoryExists($targetPath);
             } else {

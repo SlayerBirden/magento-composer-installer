@@ -5,8 +5,8 @@ namespace MagentoHackathon\Composer\Magento;
 use Composer\Package\Package;
 use MagentoHackathon\Composer\Magento\Deploystrategy\None;
 use MagentoHackathon\Composer\Magento\Event\EventManager;
-use MagentoHackathon\Composer\Magento\Factory\InstallStrategyFactory;
-use MagentoHackathon\Composer\Magento\Factory\ParserFactory;
+use MagentoHackathon\Composer\Magento\Factory\DeploystrategyFactory;
+use MagentoHackathon\Composer\Magento\Factory\EntryFactory;
 use MagentoHackathon\Composer\Magento\Repository\InstalledPackageFileSystemRepository;
 use org\bovigo\vfs\vfsStream;
 
@@ -17,12 +17,25 @@ use org\bovigo\vfs\vfsStream;
  */
 class ModuleManagerTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * @var ModuleManager
+     */
     protected $moduleManager;
     protected $installedPackageRepository;
     protected $unInstallStrategy;
-    protected $installStrategyFactory;
+    protected $entryFactory;
 
     public function setUp()
+    {
+        $config = new ProjectConfig(array(), array('config' => array('vendor-dir' => 'vendor')));
+        $this->moduleManager = $this->generateManager($config);
+    }
+
+    /**
+     * @param ProjectConfig $config
+     * @return ModuleManager
+     */
+    public function generateManager(ProjectConfig $config)
     {
         vfsStream::setup('root');
         $this->installedPackageRepository = new InstalledPackageFileSystemRepository(
@@ -30,7 +43,7 @@ class ModuleManagerTest extends \PHPUnit_Framework_TestCase
             new InstalledPackageDumper()
         );
 
-        $config = new ProjectConfig(array(), array('config' => array('vendor-dir' => 'vendor')));
+
         $this->unInstallStrategy =
             $this->getMock('MagentoHackathon\Composer\Magento\UnInstallStrategy\UnInstallStrategyInterface');
 
@@ -40,13 +53,13 @@ class ModuleManagerTest extends \PHPUnit_Framework_TestCase
             ->method('make')
             ->will($this->returnValue(new None('src', 'dest')));
 
-        $this->installStrategyFactory = new InstallStrategyFactory($config, $parserFactory);
-        $this->moduleManager = new ModuleManager(
+        $this->entryFactory = new EntryFactory($config, new DeploystrategyFactory($config, new EventManager()), $parserFactory);
+        return new ModuleManager(
             $this->installedPackageRepository,
             new EventManager,
             $config,
             $this->unInstallStrategy,
-            $this->installStrategyFactory
+            $this->entryFactory
         );
     }
 

@@ -3,11 +3,11 @@
 namespace MagentoHackathon\Composer\Magento;
 
 use Composer\Package\PackageInterface;
-use MagentoHackathon\Composer\Magento\Deploy\Manager\Entry;
+use MagentoHackathon\Composer\Magento\Directives\ArrayDumper;
 use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\Event\PackageDeployEvent;
-use MagentoHackathon\Composer\Magento\Event\PackageUnInstallEvent;
-use MagentoHackathon\Composer\Magento\Factory\InstallStrategyFactory;
+use MagentoHackathon\Composer\Magento\Factory\Directives\ActionBagFactory;
+use MagentoHackathon\Composer\Magento\Factory\EntryFactory;
 use MagentoHackathon\Composer\Magento\Repository\InstalledPackageRepositoryInterface;
 use MagentoHackathon\Composer\Magento\UnInstallStrategy\UnInstallStrategyInterface;
 
@@ -37,31 +37,47 @@ class ModuleManager
      * @var UnInstallStrategyInterface
      */
     protected $unInstallStrategy;
-
     /**
-     * @var InstallStrategyFactory
+     * @var EntryFactory
      */
-    protected $installStrategyFactory;
+    private $entryFactory;
 
     /**
      * @param InstalledPackageRepositoryInterface $installedRepository
      * @param EventManager $eventManager
      * @param ProjectConfig $config
      * @param UnInstallStrategyInterface $unInstallStrategy
-     * @param InstallStrategyFactory $installStrategyFactory
+     * @param EntryFactory $entryFactory
      */
     public function __construct(
         InstalledPackageRepositoryInterface $installedRepository,
         EventManager $eventManager,
         ProjectConfig $config,
         UnInstallStrategyInterface $unInstallStrategy,
-        InstallStrategyFactory $installStrategyFactory
+        EntryFactory $entryFactory
     ) {
         $this->installedPackageRepository = $installedRepository;
         $this->eventManager = $eventManager;
         $this->config = $config;
         $this->unInstallStrategy = $unInstallStrategy;
-        $this->installStrategyFactory = $installStrategyFactory;
+        $this->entryFactory = $entryFactory;
+    }
+
+    /**
+     * @param $needle
+     * @param array|InstalledPackage[] $haystack
+     * @return bool|\MagentoHackathon\Composer\Magento\InstalledPackage
+     */
+    protected function getPackageByName($needle, array $haystack)
+    {
+        foreach ($haystack as $package) {
+            if ($package instanceof InstalledPackage) {
+                if ($package->getName() == $needle) {
+                    return $package;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -70,9 +86,10 @@ class ModuleManager
      */
     public function updateInstalledPackages(array $currentComposerInstalledPackages)
     {
+        $magentoInstalledPackages = $this->installedPackageRepository->findAll();
         $packagesToRemove = $this->getRemoves(
             $currentComposerInstalledPackages,
-            $this->installedPackageRepository->findAll()
+            $magentoInstalledPackages
         );
 
         $packagesToInstall  = $this->getInstalls($currentComposerInstalledPackages);
@@ -80,29 +97,35 @@ class ModuleManager
         $this->doRemoves($packagesToRemove);
         //$this->doInstalls($packagesToInstall);
 
-
-
         foreach ($packagesToInstall as $install) {
-            $installStrategy = $this->installStrategyFactory->make(
-                $install,
-                $this->getPackageSourceDirectory($install)
-            );
-
-
-            $deployEntry = new Entry();
+            $deployEntry = $this->entryFactory->make($install, $this->getPackageSourceDirectory($install));
             $deployEntry->setPackageName($install->getPrettyName());
-            $deployEntry->setDeployStrategy($installStrategy);
             $this->eventManager->dispatch(
                 new PackageDeployEvent('pre-package-deploy', $deployEntry)
             );
-            $files = $installStrategy->deploy()->getDeployedFiles();
+            $initialBag = clone $deployEntry->getDeployStrategy()->getActionBag();
+            $factory = new ActionBagFactory();
+            if (($installed = $this->getPackageByName($install->getName(), $magentoInstalledPackages)) && $initialBag) {
+                $deployEntry->getDeployStrategy()
+                    ->setActionBag(
+                        $deployEntry->getDeployStrategy()
+                        ->getActionBag()
+                        ->diff($factory->parseMappings($installed->getCurrentDirectives()))
+                    );
+            }
+
+            $files = $deployEntry->getDeployStrategy()->deploy()->getDeployedFiles();
+
             $this->eventManager->dispatch(
                 new PackageDeployEvent('post-package-deploy', $deployEntry)
             );
+            $arrayDumper = new ArrayDumper();
             $this->installedPackageRepository->add(new InstalledPackage(
                 $install->getName(),
                 $install->getVersion(),
-                $files
+                $files,
+                ($install->getInstallationSource() == 'source' ? $install->getSourceReference() : $install->getDistReference()),
+                $arrayDumper->dump($initialBag)
             ));
         }
 
@@ -123,7 +146,10 @@ class ModuleManager
         };
         foreach ($packagesToRemove as $remove) {
             //$this->eventManager->dispatch(new PackageUnInstallEvent('pre-package-uninstall', $remove));
-            $this->unInstallStrategy->unInstall(array_map($addBasePath, $remove->getInstalledFiles()));
+            // do not remove code if we have diff
+            if ($this->config->getModuleSpecificDeployStrategy($remove->getName()) != 'diff') {
+                $this->unInstallStrategy->unInstall(array_map($addBasePath, $remove->getInstalledFiles()));
+            }
             //$this->eventManager->dispatch(new PackageUnInstallEvent('post-package-uninstall', $remove));
             $this->installedPackageRepository->remove($remove);
         }
@@ -153,10 +179,24 @@ class ModuleManager
                 if (!isset($currentComposerInstalledPackages[$package->getName()])) {
                     return true;
                 }
-
+                /** @var PackageInterface $composerPackage */
                 $composerPackage = $currentComposerInstalledPackages[$package->getName()];
-                return $package->getUniqueName() !== $composerPackage->getUniqueName();
+                return $package->getUniqueRefName() !== $this->getPackageUniqueRefName($composerPackage);
             }
+        );
+    }
+
+    /**
+     * @param PackageInterface $package
+     * @return string
+     */
+    protected function getPackageUniqueRefName(PackageInterface $package)
+    {
+        return sprintf('%s-%s',
+            $package->getUniqueName(),
+            ($package->getInstallationSource() == 'source' ?
+                $package->getSourceReference() :
+                $package->getDistReference())
         );
     }
 
@@ -168,13 +208,18 @@ class ModuleManager
     {
         $repo = $this->installedPackageRepository;
         $packages = array_filter($currentComposerInstalledPackages, function(PackageInterface $package) use ($repo) {
-            return !$repo->has($package->getName(), $package->getVersion());
+            return !$repo->has($package->getName(),
+                $package->getVersion(),
+                ($package->getInstallationSource() == 'source' ?
+                $package->getSourceReference() :
+                $package->getDistReference())
+            );
         });
         
         $config = $this->config;
         usort($packages, function(PackageInterface $aObject, PackageInterface $bObject) use ($config) {
-            $a = $config->getModuleSpecificSortValue($aObject->getName());
-            $b = $config->getModuleSpecificSortValue($bObject->getName());
+            $a = $config->getModuleSpecificSortValue($aObject);
+            $b = $config->getModuleSpecificSortValue($bObject);
             if ($a == $b) {
                 return strcmp($aObject->getName(), $bObject->getName());
                 /**

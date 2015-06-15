@@ -81,4 +81,16 @@ class ParserFactoryTest extends \PHPUnit_Framework_TestCase
         $factory = new ParserFactory($config);
         $instance = $factory->make($package, vfsStream::url('root'));
     }
+
+    public function testCsvMapParserIsReturnedIfCsvMapKeyIsFound()
+    {
+        vfsStream::newFile('map.csv')->at($this->root);
+        $package = new Package('module-package', '1.0.0', 'module-package');
+        $package->setExtra(array('csv-mapping' => 'map.csv'));
+
+        $config = new ProjectConfig(array(), array());
+        $factory = new ParserFactory($config);
+        $instance = $factory->make($package, vfsStream::url('root'));
+        $this->assertInstanceOf('MagentoHackathon\Composer\Magento\Parser\CsvMapParser', $instance);
+    }
 }

@@ -3,6 +3,11 @@
 namespace MagentoHackathon\Composer\Magento\Factory;
 
 use Composer\Package\PackageInterface;
+use MagentoHackathon\Composer\Magento\Deploystrategy\Core;
+use MagentoHackathon\Composer\Magento\Directives\Bag;
+use MagentoHackathon\Composer\Magento\Event\EventManager;
+use MagentoHackathon\Composer\Magento\Factory\Directives\ActionBagFactory;
+use MagentoHackathon\Composer\Magento\Plugin;
 use MagentoHackathon\Composer\Magento\ProjectConfig;
 use MagentoHackathon\Composer\Magento\Deploystrategy\DeploystrategyAbstract;
 
@@ -12,7 +17,6 @@ use MagentoHackathon\Composer\Magento\Deploystrategy\DeploystrategyAbstract;
  */
 class DeploystrategyFactory
 {
-
     /**
      * @var ProjectConfig
      */
@@ -26,14 +30,21 @@ class DeploystrategyFactory
         'symlink'   => '\MagentoHackathon\Composer\Magento\Deploystrategy\Symlink',
         'link'      => '\MagentoHackathon\Composer\Magento\Deploystrategy\Link',
         'none'      => '\MagentoHackathon\Composer\Magento\Deploystrategy\None',
+        'diff'      => '\MagentoHackathon\Composer\Magento\Deploystrategy\Diff',
     );
+    /**
+     * @var EventManager
+     */
+    private $eventManager;
 
     /**
      * @param ProjectConfig $config
+     * @param EventManager $eventManager
      */
-    public function __construct(ProjectConfig $config)
+    public function __construct(ProjectConfig $config, EventManager $eventManager)
     {
         $this->config = $config;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -58,9 +69,14 @@ class DeploystrategyFactory
             $className = static::$strategies[$strategyName];
         }
 
+        /** @var DeploystrategyAbstract $strategy */
         $strategy = new $className($packageSourcePath, realpath($this->config->getMagentoRootDir()));
         $strategy->setIgnoredMappings($this->config->getModuleSpecificDeployIgnores($package->getName()));
         $strategy->setIsForced($this->config->getMagentoForceByPackageName($package->getName()));
+        $actionFactory = new ActionBagFactory();
+        $bag = $actionFactory->make($package, $packageSourcePath);
+        $strategy->setActionBag($bag);
+        $strategy->setEventManager($this->eventManager);
         return $strategy;
     }
 }

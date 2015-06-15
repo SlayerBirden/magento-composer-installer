@@ -3,6 +3,7 @@
 namespace MagentoHackathon\Composer\Magento\Factory;
 
 use Composer\Package\PackageInterface;
+use MagentoHackathon\Composer\Magento\Parser\CsvMapParser;
 use MagentoHackathon\Composer\Magento\Parser\MapParser;
 use MagentoHackathon\Composer\Magento\Parser\ModmanParser;
 use MagentoHackathon\Composer\Magento\Parser\PackageXmlParser;
@@ -50,6 +51,10 @@ class ParserFactory implements ParserFactoryInterface
 
         if (isset($extra['package-xml'])) {
             return new PackageXmlParser(sprintf('%s/%s', $sourceDir, $extra['package-xml']));
+        }
+
+        if (isset($extra['csv-mapping'])) {
+            return new CsvMapParser(sprintf('%s/%s', $sourceDir, $extra['csv-mapping']));
         }
 
         $modmanFile = sprintf('%s/modman', $sourceDir);

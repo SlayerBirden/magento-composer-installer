@@ -3,6 +3,7 @@
 namespace MagentoHackathon\Composer\Magento\Factory;
 
 use Composer\Package\Package;
+use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\ProjectConfig;
 use org\bovigo\vfs\vfsStream;
 
@@ -24,15 +25,18 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
      * @dataProvider strategyProvider
      * @param string $strategy
      * @param string $expectedClass
+     * @param string $type
      */
-    public function testCorrectDeployStrategyIsReturned($strategy, $expectedClass)
+    public function testCorrectDeployStrategyIsReturned($strategy, $expectedClass, $type)
     {
         $package = new Package("some/package", "1.0.0", "some/package");
+        $package->setType($type);
         $config = new ProjectConfig(array(
             'magento-deploystrategy' => $strategy,
             'magento-root-dir' => vfsStream::url('root/htdocs'),
         ), array());
-        $factory = new DeploystrategyFactory($config);
+        $factory = new DeploystrategyFactory($config, new EventManager());
+        vfsStream::newFile('directives.csv')->at($this->root);
         $instance = $factory->make($package, sprintf('%s/some/package', vfsStream::url('root/vendor')));
         $this->assertInstanceOf($expectedClass, $instance);
     }
@@ -43,10 +47,11 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
     public function strategyProvider()
     {
         return array(
-            array('copy',    '\MagentoHackathon\Composer\Magento\Deploystrategy\Copy'),
-            array('symlink', '\MagentoHackathon\Composer\Magento\Deploystrategy\Symlink'),
-            array('link',    '\MagentoHackathon\Composer\Magento\Deploystrategy\Link'),
-            array('none',    '\MagentoHackathon\Composer\Magento\Deploystrategy\None'),
+            array('copy',    '\MagentoHackathon\Composer\Magento\Deploystrategy\Copy', 'magento-module'),
+            array('symlink', '\MagentoHackathon\Composer\Magento\Deploystrategy\Symlink', 'magento-module'),
+            array('link',    '\MagentoHackathon\Composer\Magento\Deploystrategy\Link', 'magento-module'),
+            array('none',    '\MagentoHackathon\Composer\Magento\Deploystrategy\None', 'magento-module'),
+            array('diff',    '\MagentoHackathon\Composer\Magento\Deploystrategy\Diff', 'magento-core'),
         );
     }
 
@@ -57,7 +62,7 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
             'magento-deploystrategy' => 'lolnotarealstrategy',
             'magento-root-dir' => vfsStream::url('root/htdocs'),
         ), array());
-        $factory = new DeploystrategyFactory($config);
+        $factory = new DeploystrategyFactory($config, new EventManager());
 
         $instance = $factory->make($package, sprintf('%s/some/package', vfsStream::url('root/vendor')));
         $this->assertInstanceOf('\MagentoHackathon\Composer\Magento\Deploystrategy\Symlink', $instance);
@@ -72,7 +77,7 @@ class DeploystrategyFactoryTest extends \PHPUnit_Framework_TestCase
             'magento-root-dir' => vfsStream::url('root/htdocs'),
         ), array());
 
-        $factory = new DeploystrategyFactory($config);
+        $factory = new DeploystrategyFactory($config, new EventManager());
 
         $instance = $factory->make($package, sprintf('%s/some/package', vfsStream::url('root/vendor')));
         $this->assertInstanceOf('\MagentoHackathon\Composer\Magento\Deploystrategy\None', $instance);

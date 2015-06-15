@@ -18,6 +18,8 @@ class InstalledPackageDumper
             'packageName'       => $installedPackage->getName(),
             'version'           => $installedPackage->getVersion(),
             'installedFiles'    => $installedPackage->getInstalledFiles(),
+            'ref'               => $installedPackage->getRef(),
+            'currentDirectives' => $installedPackage->getCurrentDirectives(),
         );
     }
 
@@ -27,6 +29,13 @@ class InstalledPackageDumper
      */
     public function restore(array $data)
     {
-        return new InstalledPackage($data['packageName'], $data['version'], $data['installedFiles']);
+        $package = new InstalledPackage($data['packageName'], $data['version'], $data['installedFiles']);
+        if (isset($data['currentDirectives'])) {
+            $package->setCurrentDirectives($data['currentDirectives']);
+        }
+        if (isset($data['ref'])) {
+            $package->setRef($data['ref']);
+        }
+        return $package;
     }
 }
