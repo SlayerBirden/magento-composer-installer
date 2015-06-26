@@ -72,10 +72,14 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     protected function applyEvents(EventManager $eventManager)
     {
-
         if ($this->config->hasAutoAppendGitignore()) {
             $gitIgnoreLocation = sprintf('%s/.gitignore', $this->config->getMagentoRootDir());
             $eventManager->listen('post-package-deploy', new GitIgnoreListener(new GitIgnore($gitIgnoreLocation)));
+        }
+        if ($this->config->hasAutoAppendGitignore()) {
+            $gitIgnoreLocation = sprintf('%s/.gitignore', $this->config->getMagentoRootDir());
+            $listener = new GitIgnoreListener(new GitIgnore($gitIgnoreLocation));
+            $eventManager->listen('post-package-remove', [$listener, 'packageRemoved']);
         }
 
         $io = $this->io;

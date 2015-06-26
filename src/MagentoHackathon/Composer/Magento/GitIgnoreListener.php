@@ -43,4 +43,17 @@ class GitIgnoreListener
 
         $this->gitIgnore->write();
     }
+
+    /**
+     * remove package files from gitignore
+     * @param InstalledPackage $package
+     */
+    public function packageRemoved(InstalledPackage $package)
+    {
+        $this->gitIgnore->removeMultipleEntries(
+            $package->getInstalledFiles()
+        );
+
+        $this->gitIgnore->write();
+    }
 }

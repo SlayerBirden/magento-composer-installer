@@ -6,6 +6,7 @@ use Composer\Package\PackageInterface;
 use MagentoHackathon\Composer\Magento\Directives\ArrayDumper;
 use MagentoHackathon\Composer\Magento\Event\EventManager;
 use MagentoHackathon\Composer\Magento\Event\PackageDeployEvent;
+use MagentoHackathon\Composer\Magento\Event\PackageUnInstallEvent;
 use MagentoHackathon\Composer\Magento\Factory\Directives\ActionBagFactory;
 use MagentoHackathon\Composer\Magento\Factory\EntryFactory;
 use MagentoHackathon\Composer\Magento\Repository\InstalledPackageRepositoryInterface;
@@ -152,6 +153,10 @@ class ModuleManager
             }
             //$this->eventManager->dispatch(new PackageUnInstallEvent('post-package-uninstall', $remove));
             $this->installedPackageRepository->remove($remove);
+
+            $this->eventManager->dispatch(
+                new PackageUnInstallEvent('post-package-remove', $remove)
+            );
         }
     }
 
