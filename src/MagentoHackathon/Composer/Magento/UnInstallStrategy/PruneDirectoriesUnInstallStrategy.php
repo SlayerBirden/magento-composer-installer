@@ -41,7 +41,7 @@ class PruneDirectoriesUnInstallStrategy implements UnInstallStrategyInterface
         }
         // prune directories
         foreach ($this->directories as $dir) {
-            if ($this->fileSystem->isDirEmpty($dir)) {
+            if (file_exists($dir) && is_dir($dir) && $this->fileSystem->isDirEmpty($dir)) {
                 $this->fileSystem->removeDirectory($dir);
             }
         }
