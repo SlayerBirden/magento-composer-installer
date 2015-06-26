@@ -72,8 +72,7 @@
         }
     },
     "bin": [
-        "bin/magento-composer-installer.php",
-        "bin/installer_core_utils.php"
+        "bin/magento-composer-installer.php"
     ],
     "archive": {
         "exclude": [
