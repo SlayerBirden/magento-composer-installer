@@ -3,6 +3,7 @@
 namespace MagentoHackathon\Composer\Magento;
 
 use MagentoHackathon\Composer\Magento\Event\PackageDeployEvent;
+use MagentoHackathon\Composer\Magento\Event\PackageUnInstallEvent;
 
 /**
  * Class GitIgnoreListener
@@ -46,12 +47,12 @@ class GitIgnoreListener
 
     /**
      * remove package files from gitignore
-     * @param InstalledPackage $package
+     * @param PackageUnInstallEvent $packageEvent
      */
-    public function packageRemoved(InstalledPackage $package)
+    public function packageRemoved(PackageUnInstallEvent $packageEvent)
     {
         $this->gitIgnore->removeMultipleEntries(
-            $package->getInstalledFiles()
+            $packageEvent->getPackage()->getInstalledFiles()
         );
 
         $this->gitIgnore->write();
