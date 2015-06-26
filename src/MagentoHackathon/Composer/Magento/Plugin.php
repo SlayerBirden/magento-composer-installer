@@ -14,7 +14,7 @@ use MagentoHackathon\Composer\Magento\Factory\EntryFactory;
 use MagentoHackathon\Composer\Magento\Factory\ParserFactory;
 use MagentoHackathon\Composer\Magento\Factory\PathTranslationParserFactory;
 use MagentoHackathon\Composer\Magento\Repository\InstalledPackageFileSystemRepository;
-use MagentoHackathon\Composer\Magento\UnInstallStrategy\UnInstallStrategy;
+use MagentoHackathon\Composer\Magento\UnInstallStrategy\PruneDirectoriesUnInstallStrategy;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Composer\Composer;
@@ -185,7 +185,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             ),
             $eventManager,
             $this->config,
-            new UnInstallStrategy($this->filesystem),
+            new PruneDirectoriesUnInstallStrategy($this->filesystem),
             $this->entryFactory
         );
 
