@@ -35,7 +35,7 @@ class PruneDirectoriesUnInstallStrategy implements UnInstallStrategyInterface
     {
         foreach ($files as $file) {
             if (file_exists($file)) {
-                array_merge($this->directories, $this->getDirectories($file));
+                $this->directories = array_merge($this->directories, $this->getDirectories($file));
                 $this->fileSystem->unlink($file);
             }
         }
